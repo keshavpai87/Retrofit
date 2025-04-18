@@ -3,6 +3,7 @@ package com.example.retrofit
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -14,6 +15,8 @@ import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var retService : AlbumService
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -24,13 +27,23 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        val retService = RetrofitInstance
+        retService = RetrofitInstance
             .getRetrofitInstance()
             .create(AlbumService::class.java)
 
+        getRequestWithQueryParameter()
+
+        getRequestWithPathParameter()
+
+    }
+
+    // Query Parameter Example
+    private fun getRequestWithQueryParameter() {
         val responseLiveData : LiveData<Response<Album>> = liveData {
-//            val response = retService.getAlbums()
-            val response = retService.getSortedAlbums(3)
+
+//            val response = retService.getAlbums() // Getting all the data
+
+            val response = retService.getSortedAlbums(3)    // Using Query Parameters
             emit(response)
         }
 
@@ -39,13 +52,32 @@ class MainActivity : AppCompatActivity() {
             if(albumsList != null) {
                 while (albumsList.hasNext()) {
                     val albumItem = albumsList.next()
+
+                    // Displaying all the title data
                     Log.i("MYTAG", "Title : ${albumItem.title}")
+
+                    //Using Query Parameters
                     val result = " " + "Album Id : ${albumItem.id}" + "\n" +
-                                " " + "Album User Id : ${albumItem.userId}" + "\n" +
-                                " " + "Album Title : ${albumItem.title}" + "\n\n\n"
+                            " " + "Album User Id : ${albumItem.userId}" + "\n" +
+                            " " + "Album Title : ${albumItem.title}" + "\n\n\n"
 
                     findViewById<TextView>(R.id.text_view).append(result)
                 }
+            }
+        })
+    }
+
+    // Path Parameter Example
+    private fun getRequestWithPathParameter() {
+        val responsePathLiveData : LiveData<Response<AlbumItem>> = liveData {
+            val response = retService.getAlbumById(3)
+            emit(response)
+        }
+
+        responsePathLiveData.observe(this, Observer {
+            val title = it.body()?.title
+            if(title != null) {
+                Toast.makeText(applicationContext, title, Toast.LENGTH_SHORT).show()
             }
         })
     }
